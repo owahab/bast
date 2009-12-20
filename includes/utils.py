@@ -34,4 +34,15 @@ class output:
         """
         Handle output to e-mails
         """
-        
+        import smtplib
+        from email.mime.text import MIMEText
+
+        msg = MIMEText(self.message)
+       
+        msg['Subject'] = 'The contents of %s' % textfile
+        msg['From'] = me
+        msg['To'] = you
+
+        s = smtplib.SMTP()
+        s.sendmail(me, [you], msg.as_string())
+        s.quit()
