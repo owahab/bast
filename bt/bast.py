@@ -6,7 +6,7 @@ import sys
 import os
 import time
 from datetime import datetime
-from includes import utils
+from bast import utils
 from optparse import OptionParser
 from ConfigParser import ConfigParser
 
@@ -36,8 +36,7 @@ def main():
         if section != 'general':
             m = get_class("plugins.%s.%s" % (section, section))
             plugin = m()
-            plugin.do()
-
+            plugin.backup(conf.items(section))
     sys.exit(0)
 
 def get_class(class_name):
@@ -45,7 +44,7 @@ def get_class(class_name):
     module = ".".join(parts[:-1])
     m = __import__( module )
     for comp in parts[1:]:
-        m = getattr(m, comp)            
+        m = getattr(m, comp)
     return m
 
 if __name__ == "__main__":
