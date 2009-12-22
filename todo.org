@@ -1,10 +1,13 @@
-#+TAGS: Important (!) Work In Progress (WIP)
+#+TAGS: WIP
 #+STARTUP: showall
 #+STARTUP: hidestars
 
-* TODO [#B] Documentation
-* TODO [#A] Logging
-* TODO [#A] Test, test, test 
+
+* TODO [#B] A better structure						:WIP:
+* TODO [#A] Logging							:WIP:
+* TODO [#B] E-mail notifications
 * TODO [#B] Sandboxing plugins
+* TODO [#C] Documentation
 * TODO [#C] Messaging?
 * TODO [#C] Make file?
+* TODO [#A] Test, test, test 
