@@ -1,0 +1,13 @@
+A B O U T  :
+===================================
+BAST (Back And Synchronization Tools) is a set of tools to minimize
+the effort required to create, archive, rotate, synchronize backups.
+
+T R Y   I T   O U T :
+===================================
+* Get yourself a copy of the code.
+* From your command line, cd to the base BAST directory.
+* Pick the command that suits your OS:
+  Unix/Linux/BSD/OSX: ./bast.sh --conf doc/examples/project1.conf
+  Windows: ./bast.bat --conf doc/examples/project1.conf
+* You may also try --help for more help.
