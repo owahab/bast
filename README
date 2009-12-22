@@ -5,8 +5,8 @@ the effort required to create, archive, rotate, synchronize backups.</p>
 
 <h2>TRY IT OUT:</h2>
 <ul>
-<li>Get yourself a copy of the code.
-<li>From your command line, cd to the base BAST directory.
+<li>Get yourself a copy of the code.</li>
+<li>From your command line, cd to the base BAST directory.</li>
 <li>Pick the command that suits your OS:<ul>
   <li><strong>Unix/Linux/BSD/OSX:</strong><br /><pre>./bast.sh --conf doc/examples/project1.conf</pre></li>
   <li><strong>Windows:</strong> <pre>./bast.bat --conf doc/examples/project1.conf</pre></li>
