@@ -11,3 +11,9 @@
 * TODO [#C] Messaging?
 * TODO [#C] Make file?
 * TODO [#A] Test, test, test 
+* TODO [#B] Luxurious support for multiple projects
+  BAST already supports multiple projects through --conf, but it can also
+  provide a ready to use feature where you can just b[l]ast your configuration
+  files, execute a sort of a run-all command and it works. run-all can actually
+  be very independent. It will receive 2 parameters, the first is the to the
+  configuration directory. The second is the time to sleep between each one.
