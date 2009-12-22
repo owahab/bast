@@ -1,9 +1,8 @@
-<h2>ABOUT:</h2>
-<p>BAST (Back And Synchronization Tools) is a set of tools to minimize
+<h3>ABOUT:</h3>
+<p>BAST (Backup And Synchronization Tools) is a set of tools to minimize
 the effort required to create, archive, rotate, synchronize backups.</p>
 <br />
-
-<h2>TRY IT OUT:</h2>
+<h3>TRY IT OUT:</h3>
 <ul>
 <li>Get yourself a copy of the code.</li>
 <li>From your command line, cd to the base BAST directory.</li>
