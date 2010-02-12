@@ -16,9 +16,8 @@ class bast(object):
         Initializing
         """
         self.__init_proc_name()
-        
+
         self.__init_options()
-        (self.options, self.args) = self.parser.parse_args()
 
         # Logging
         self.__init_logging()
@@ -30,14 +29,7 @@ class bast(object):
         #self.time_started = time.time()
         #self.output = common.output()
         
-
-        """ Parsing options... """
-        # TODO: Remove this
-        if self.options.conf == 'NoFile':
-            log.error('Expecting at lease one parameter (try "--help" for help).')
-            self.parser.error('Expecting at lease one parameter (try "--help" for help).')
-        else:
-            self.get_config()
+        self.get_config()
 
         # Dynamically load plugins based on configuration sections
         for section in self.config.sections():
@@ -63,10 +55,16 @@ class bast(object):
     def __init_options(self):
         log.info('Initializing option parser...')
         from optparse import OptionParser
-        self.parser = OptionParser(version="%prog 0.1b", description="BAST (Backup And Synchronization Tools) - Egypt Development Center")
-        self.parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='verbose output', default=False)
-        self.parser.add_option('-d', '--debug', action='store_true', dest='debug', help='debug', default=False)
-        self.parser.add_option('-c', '--conf', dest='conf', help='read configuration from CONF', metavar='CONF', default="NoFile")
+        parser = OptionParser(version="%prog 0.1b",
+                                   description="BAST (Backup And Synchronization Tools) - Egypt Development Center",
+                                   usage="%prog [options] <conf-file>")
+        parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='verbose output', default=False)
+        parser.add_option('-d', '--debug', action='store_true', dest='debug', help='debug', default=False)
+
+        (self.options, self.args) = parser.parse_args()
+        if not len(self.args):
+            log.error('Expecting a configuration file to be given (try "--help" for help).')
+            parser.error('Expecting a configuration file to be given (try "--help" for help).')
         
     def __init_logging(self):
         console_format = "%(levelname)-8s: %(message)s"
