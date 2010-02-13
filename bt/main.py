@@ -4,6 +4,8 @@ __version__ = '0.2.0'
 import sys
 import os
 import logging
+import datetime
+import time
 from threading import Thread
 
 from bt import common
@@ -31,11 +33,18 @@ class bast(object):
         
         self.get_config()
 
+        # Backup IDs use this pattern: <project-name>.<yyyy-mm-dd>.<timestamp>
+        now = datetime.datetime.now()
+        project_name = os.path.splitext(os.path.basename(self.conf))[0]
+        # It is a requirement that project name doesn't contain any non-alphanumeric
+        # characters, maybe we should validate that here.
+        backup_id = '%s.%d-%02d-%02d.%d' % (project_name, now.year, now.month, now.day, int(time.time()))
+
         # Dynamically load plugins based on configuration sections
         for section in self.config.sections():
             if section != 'general':
                 m = self.__get_class("plugins.%s.%s" % (section, section))
-                p = m()
+                p = m(backup_id=backup_id)
                 Thread(target=p.run, kwargs=dict(self.config.items(section)), name=section).start()
 
     def __init_path(self):
