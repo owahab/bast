@@ -65,6 +65,8 @@ class bast(object):
         if not len(self.args):
             log.error('Expecting a configuration file to be given (try "--help" for help).')
             parser.error('Expecting a configuration file to be given (try "--help" for help).')
+        else:
+            self.conf = self.args[0]
         
     def __init_logging(self):
         console_format = "%(levelname)-8s: %(message)s"
@@ -97,17 +99,15 @@ class bast(object):
         return m
 
     def get_config(self):
-        log.info("Loading configuration file %s..." % self.options.conf)
+        log.info("Loading configuration file %s..." % self.conf)
         from ConfigParser import ConfigParser
         # Read configuration file
         self.config = ConfigParser()
-        self.config.read(self.options.conf)
+        self.config.read(self.conf)
 
     def set_timer(self):
         #from time import time
         pass
-
-
 
     def get_version(self):
         return __version__
