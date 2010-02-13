@@ -36,11 +36,7 @@ class bast(object):
             if section != 'general':
                 m = self.__get_class("plugins.%s.%s" % (section, section))
                 p = m()
-                Thread(target=p.backup, args=(self.config.items(section)), name=section).start()
-                #p.start()
-
-        self._bast = self
-
+                Thread(target=p.run, kwargs=dict(self.config.items(section)), name=section).start()
 
     def __init_path(self):
         log.info('Initializing path settings...')
@@ -111,6 +107,3 @@ class bast(object):
 
     def get_version(self):
         return __version__
-
-    def bast():
-        return BAST._bast

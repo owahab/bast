@@ -1,6 +1,7 @@
 import time
+
 class dummy1():
-    def backup(self, conf, *args):
+    def run(self, **conf):
         while True:
             #log.info("dummy plugin is for demonestration purposes")
             print conf
