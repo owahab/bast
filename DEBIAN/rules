@@ -1,0 +1,72 @@
+#!/usr/bin/make -f
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# Get supported python version and destdir
+PYVERS  = $(shell pyversions -rv)
+DESTDIR = $(CURDIR)/debian/exaile
+PREFIX  = /usr
+
+CFLAGS = -Wall -g
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -O0
+else
+	CFLAGS += -O2
+endif
+
+build:
+
+clean: unpatch
+	dh_testdir
+	dh_testroot
+	rm -f build-install-lib-stamp* po/messages.pot
+	$(MAKE) clean
+	# This should be in upstream Makefile
+	rm -f exaile.glade.h messages.pot plugins/plugins.glade.h
+	dh_clean 
+
+install: install-prereqs $(PYVERS:%=build-install-lib-stamp%)
+	$(MAKE) translations
+	$(MAKE) install DESTDIR=$(DESTDIR) PREFIX=$(PREFIX)
+
+install-prereqs: patch
+	dh_testdir
+	dh_testroot
+	dh_clean -k 
+	dh_installdirs
+
+build-install-lib-stamp%: build
+	$(MAKE) clean
+	$(MAKE) -C mmkeys mmkeyspy.c
+	cd mmkeys; python$* setup.py build
+	cd mmkeys; python$* setup.py install --root=$(DESTDIR)
+	touch $@
+
+binary-indep: build install
+
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs changelog
+	dh_installdocs
+	dh_installmenu
+	dh_installman
+	# Add mmkeys private python module path
+	#sed -i "s!\(^[^#]*import mmkey.*\)!    sys.path.append(\"/usr/lib/exaile/\"+\"python\"+sys.version[:3])\n\1!" \
+	#$(DESTDIR)/usr/share/exaile/exaile.py
+	# Strip useless shebang lines
+	perl debian/strip_shebang $(DESTDIR)/usr/lib/exaile/xl/plugins/*.py $(DESTDIR)/usr/lib/exaile/xl/*.py $(DESTDIR)/usr/lib/exaile/exaile.py
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+	dh_pysupport
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install

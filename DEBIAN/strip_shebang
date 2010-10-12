@@ -1,0 +1,30 @@
+#! /usr/bin/perl
+
+use strict;
+
+while (my $file = shift)
+{
+    print STDERR "Stripping shebang from file: `$file'\n";
+
+    my $tmpfile = $file.'.tmp';
+    system ('mv', $file, $tmpfile);
+
+    open IN, $tmpfile
+        or die ("could not open file `$tmpfile': $!\n");
+
+    open OUT, ">$file"
+        or die ("could not open file `$file': $!\n");
+
+    $_ = <IN>;
+    print OUT unless (/^\#!/);
+    
+    while (<IN>)
+    {
+        print OUT;
+    }
+    
+    close IN;
+    close OUT;
+
+    system ('rm', $tmpfile);
+}

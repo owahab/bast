@@ -1,0 +1,3 @@
+?package(bast):needs="python" section="Applications/Utils" \
+  title="BAST" command="/usr/bin/bast" \
+  icon=""

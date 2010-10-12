@@ -1,0 +1,13 @@
+Source: bast
+Section: utils
+Priority: optional
+Maintainer: Omar Abdel-Wahab <owahab@gmail.com>
+Uploaders: Omar Abdel-Wahab <owahab@gmail.com>
+Build-Depends: python, intltool, intltool-debian
+Version: 1.0
+Homepage: http://github.com/owahab/BAST
+Package: bast
+Architecture: any
+Depends: python
+Recommends: python-notify
+Description: Backup And Synchronization Tools
