@@ -39,13 +39,17 @@ class bast(object):
         # It is a requirement that project name doesn't contain any non-alphanumeric
         # characters, maybe we should validate that here.
         backup_id = '%s.%d-%02d-%02d.%d' % (project_name, now.year, now.month, now.day, int(time.time()))
+        destination = '/tmp/'
+        target = destination + backup_id
+        os.mkdir(target)
+        os.chdir(target)
 
         # Dynamically load plugins based on configuration sections
         for section in self.config.sections():
-            if section != 'general':
-                m = self.__get_class("plugins.%s.%s" % (section, section))
-                p = m(backup_id=backup_id)
-                Thread(target=p.run, kwargs=dict(self.config.items(section)), name=section).start()
+          if section != 'general':
+            m = self.__get_class("plugins.%s.%s" % (section, section))
+            p = m(backup_id=backup_id)
+            Thread(target=p.run, kwargs=dict(self.config.items(section)), name=section).start()
 
     def __init_path(self):
         log.info('Initializing path settings...')

@@ -2,12 +2,20 @@ import subprocess
 from bt.plugin import BastPlugin
 
 class mysql(BastPlugin):
-    mysqldump = 'mysqldump'
+  mysqldump = 'mysqldump'
 
-    def run(self, username, password, host, dbname):
-        subprocess.call([self.mysqldump,
-                         '-u' + username,
-                         '-p' + password,
-                         '-h' + host,
-                         '-r' + self.backup_id + '-mysql-' + dbname + '.sql',
-                         dbname])
+  def run(self, username, password, host, dbname):
+    p = ''
+    if password:
+      p = '-p' + password
+    
+    filename = self.backup_id + '-mysql-' + dbname + '.sql'
+    subprocess.call([
+      self.mysqldump,
+      '-u' + username,
+      p,
+      '-h' + host,
+      '-r' + filename,
+      dbname
+    ])
+    self.compress(filename)
