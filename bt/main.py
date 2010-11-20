@@ -89,7 +89,7 @@ class bast(object):
     def __init_options(self):
         from optparse import OptionParser
         parser = OptionParser(version="%prog 0.1b",
-                                   description="BAST (Backup And Synchronization Tools) - Egypt Development Center",
+                                   description="BAST (Backup And Synchronization Tools)",
                                    usage="%prog [options] <conf-file>")
         parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='verbose output', default=False)
         parser.add_option('-d', '--debug', action='store_true', dest='debug', help='debug', default=False)
