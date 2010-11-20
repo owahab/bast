@@ -1,14 +1,69 @@
-<h3>ABOUT:</h3>
-<p>BAST (Backup And Synchronization Tools) is a set of tools to minimize
-the effort required to create, archive, rotate, synchronize backups.</p>
-<br />
-<h3>TRY IT OUT:</h3>
-<ul>
-<li>Get yourself a copy of the code.</li>
-<li>From your command line, cd to the base BAST directory.</li>
-<li>Pick the command that suits your OS:<ul>
-  <li><strong>Unix/Linux/BSD/OSX:</strong><br /><pre>./bast.sh --conf doc/examples/project1.conf</pre></li>
-  <li><strong>Windows:</strong> <pre>./bast.bat --conf doc/examples/project1.conf</pre></li>
-  </ul></li>
-<li>You may also try --help for more help.</li>
-</ul>
+ABOUT:
+------
+BAST (Backup And Synchronization Tools) is a set of tools to minimize
+the effort required to create, archive, rotate, synchronize backups.
+
+TRY IT OUT:
+-----------
+Get yourself a copy of the code.
+From your command line, cd to the base BAST directory.
+Pick the command that suits your OS:
+Unix/Linux/BSD/OSX:
+  ./bast.sh doc/examples/project1.conf
+Windows: bast.bat doc/examples/project1.conf
+
+Hint: You may also try --help for more help.
+
+CONFIGURING BAST:
+-----------------
+A typical config file looks like:
+
+[BAST]
+;;;;;;;;;;;;;;;;;;;;
+; Core Options     ;
+;;;;;;;;;;;;;;;;;;;;
+; Use the following directive to turn backups on and off
+; default: On
+;backups = Off
+; Send notifications upon backup completion.
+; default: Off
+notifications = On
+; Define how many backups to keep
+; Older backups will be deleted first.
+; default: 10
+rotate = 20
+
+;;;;;;;;;;;;;;;;;;;;
+; Mail Options     ;
+;;;;;;;;;;;;;;;;;;;;
+; SMTP server to login to
+mail.server = localhost
+; SMTP port
+mail.port = 110
+; Set this to on if your SMTP server uses TLS (GMail for instance)
+; default: Off
+;mail.tls = On
+; SMTP username to login with
+mail.username = foo@bar.com
+; SMTP password to login with
+mail.password = secret_password
+; SMTP username to send notification to
+mail.notify = pat@example.com
+
+;;;;;;;;;;;;;;;;;;;;
+; Plugins Options  ;
+;;;;;;;;;;;;;;;;;;;;
+[mysql]
+; MySQL server to use
+host = localhost
+; MySQL username
+username = root
+; MySQL password to login with
+;password = optional
+; MySQL database name
+dbname = elcinema_development
+
+[files]
+; Full path to what you need to backup
+; Must be a directory
+directory = /Users/owahab/Desktop/test/
