@@ -52,20 +52,20 @@ class bast(object):
               thread.start()
               thread.join()
               plugins_status[section] = p.status
-          report.append('------------')
-          report.append('The following plugins were executed:')
           for k, v in plugins_status.items():
-            report.append('%s: %s' % (k, ('OK' if v == True else 'Failed')))
-          report.append('------------')
+            s = 'Executed plugin %s: %s' % (k, ('OK' if v == True else 'Failed'))
+            report.append(s)
+            self.log.debug(s)
           self.log.debug('Changing directory to %s.' % project_dir)
           os.chdir(project_dir)
           # Compress
           self.log.debug('Compressing backup directory %s.' % now_tag)
           backup_file = self.compress(now_tag)
           # Gather few statistics
-          report.append('Backup size is: %s' % self.human_size(os.path.getsize(backup_file)))
+          s = 'Backup size is: %s' % self.human_size(os.path.getsize(backup_file))
+          report.append(s)
+          self.log.info(s)
           self.log.info('Backup complete!')
-          self.log.info("\n".join(report))
           backup_status = 'Successful: %s' % now_tag
         else:
           self.log.info('Backups for %s are suspended by configuration file. Exiting!' % project_name)
@@ -189,16 +189,21 @@ class bast(object):
     def rotate(self, count, project_name, directory):
       self.log.debug('Rotating old backups for %s:' % project_name)
       l = os.listdir(directory)
-      i = 0
+      i = d = 0
       for f in sorted(l, reverse=True):
         if f != 'latest':
           i += 1
           if i > count:
-            self.log.debug('Deleting old backup %s.' % f)
-            os.remove(f)
+            try:
+              os.remove(f)
+              d += 1
+            except:
+              i -= 1
+            else:
+              self.log.debug('Deleting old backup %s.' % f)              
           else:
             self.log.debug('Keeping backup %s.' % f)
-      status = 'Found %d old backups. Kept latest %d.' % ((len(l) - 1), count)
+      status = 'Deleted %d of %d old backups.' % (d, (len(l) - 1))
       self.log.debug(status)
       return status
       
