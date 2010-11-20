@@ -8,7 +8,7 @@ class files(BastPlugin):
     dir_name = self.backup_id + '--files'
     self.log.debug("Backing up directory %s." % directory)
     try:
-      shutil.copytree(directory, dir_name)
+      shutil.copytree(directory, dir_name, symlinks=True)
     except:
       self.log.error('File backup cancelled! (%s)' % sys.exc_info()[1])
     else:
