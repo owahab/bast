@@ -22,7 +22,7 @@ class bast(object):
         # TODO: make this path thingy a little smarter
         self.__init_path()
         
-        stats = ''
+        report = []
         if self.config.getboolean('BAST', 'backups', True):
           self.log.info("Starting backup for %s..." % project_name)
           # Backup IDs use this pattern: <project-name>--<yyyy.mm.dd>-<hh.mm.ss>
@@ -52,23 +52,29 @@ class bast(object):
               thread.start()
               thread.join()
               plugins_status[section] = p.status
-
+          report.append('------------')
+          report.append('The following plugins were executed:')
+          for k, v in plugins_status.items():
+            report.append('%s: %s' % (k, ('OK' if v == True else 'Failed')))
+          report.append('------------')
           self.log.debug('Changing directory to %s.' % project_dir)
           os.chdir(project_dir)
           # Compress
           self.log.debug('Compressing backup directory %s.' % now_tag)
           backup_file = self.compress(now_tag)
           # Gather few statistics
-          stats = 'Backup size is: %s' % self.human_size(os.path.getsize(backup_file))
+          report.append('Backup size is: %s' % self.human_size(os.path.getsize(backup_file)))
           self.log.info('Backup complete!')
-          self.log.info(stats)
-          status = 'Successful: %s' % now_tag
+          self.log.info("\n".join(report))
+          backup_status = 'Successful: %s' % now_tag
         else:
           self.log.info('Backups for %s are suspended by configuration file. Exiting!' % project_name)
-          status = 'Suspended'
+          backup_status = 'Suspended'
+        # Rotate old backups
+        report.append(self.rotate(self.config.getint('BAST', 'rotate', 10), project_name, project_dir))
         # Send notifications
         if self.config.getboolean('BAST', 'notifications', False):
-          self.notify(project_name, status, stats)
+          self.notify(project_name, backup_status, report)
 
     def __init_path(self):
         self.log.debug('Initializing path settings.')
@@ -178,14 +184,31 @@ class bast(object):
       self.log.debug('Creating symbolic link latest -> %s.' % directory)
       os.symlink(name, 'latest')
       return name    
-
-    def notify(self, project_name, status, stats = ''):
+      
+    
+    def rotate(self, count, project_name, directory):
+      self.log.debug('Rotating old backups for %s:' % project_name)
+      l = os.listdir(directory)
+      i = 0
+      for f in sorted(l, reverse=True):
+        if f != 'latest':
+          i += 1
+          if i > count:
+            self.log.debug('Deleting old backup %s.' % f)
+            os.remove(f)
+          else:
+            self.log.debug('Keeping backup %s.' % f)
+      status = 'Found %d old backups. Kept latest %d.' % ((len(l) - 1), count)
+      self.log.debug(status)
+      return status
+      
+    def notify(self, project_name, status, report):
       self.log.debug('Sending notifications for %s.' % project_name)
       import smtplib
       from email.mime.text import MIMEText
-      body = '''Hello,
-      Your backup status is: %s.
-      %s''' % (status, stats)
+      report.insert(0, 'Backup for %s status is: %s.' % (project_name, status))
+      report.insert(0, 'Hello!')
+      body = "\n".join(report)
       msg = MIMEText(body)
       msg['Subject'] = '[%s - Backup] %s' % (project_name, status)
       msg['From'] = self.config.get('BAST', 'mail.username')
