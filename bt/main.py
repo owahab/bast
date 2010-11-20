@@ -3,56 +3,75 @@ __version__ = '0.2.0'
 
 import sys
 import os
-import logging
 import datetime
 import time
-from threading import Thread
-
-from bt import common
-
-log = logging.getLogger(__name__)
+import shutil
+import threading
 
 class bast(object):
     def __init__(self):
         """
         Initializing
         """
-        self.__init_proc_name()
-
         self.__init_options()
-
+        project_name = os.path.splitext(os.path.basename(self.conf))[0]
         # Logging
-        self.__init_logging()
-        log.info("Initializing BAST %s" % __version__)
-        
+        self.__init_logging(project_name)
+        self.__init_config()
+        self.__init_proc_name()
         # TODO: make this path thingy a little smarter
         self.__init_path()
-
-        #self.time_started = time.time()
-        #self.output = common.output()
         
-        self.get_config()
+        stats = ''
+        if self.config.getboolean('BAST', 'backups', True):
+          self.log.info("Starting backup for %s..." % project_name)
+          # Backup IDs use this pattern: <project-name>--<yyyy.mm.dd>-<hh.mm.ss>
+          now = datetime.datetime.now()
+          # It is a requirement that project name doesn't contain any non-alphanumeric
+          # characters, maybe we should validate that here.
+          now_tag = '%04d.%02d.%02d-%02d.%02d.%02d' % (now.year, now.month, now.day, now.hour, now.minute, now.second)
+          backup_id = '%s--%s' % (project_name, now_tag)
+          destination = '/tmp'
+          project_dir = '%s/%s' %(destination, project_name)
+          target = '%s/%s' % (project_dir, now_tag)
+          if not os.path.exists(project_dir):
+            self.log.debug('Creating directory %s.' % project_dir)
+            os.mkdir(project_dir)
+          self.log.debug('Creating directory %s.' % target)
+          os.mkdir(target)
+          self.log.debug('Changing directory to %s.' % target)
+          os.chdir(target)
+          
+          plugins_status = {}
+          # Dynamically load plugins based on configuration sections
+          for section in self.config.sections():
+            if section != 'BAST':
+              m = self.__get_class("plugins.%s.%s" % (section, section))
+              p = m(log=self.log, backup_id=backup_id)
+              thread = threading.Thread(target=p.run, kwargs=dict(self.config.items(section)), name=section)
+              thread.start()
+              thread.join()
+              plugins_status[section] = p.status
 
-        # Backup IDs use this pattern: <project-name>.<yyyy-mm-dd>.<timestamp>
-        now = datetime.datetime.now()
-        project_name = os.path.splitext(os.path.basename(self.conf))[0]
-        # It is a requirement that project name doesn't contain any non-alphanumeric
-        # characters, maybe we should validate that here.
-        backup_id = '%s.%d-%02d-%02d.%d' % (project_name, now.year, now.month, now.day, int(time.time()))
-        destination = '/tmp/'
-        target = destination + backup_id
-        os.mkdir(target)
-        os.chdir(target)
-
-        # Dynamically load plugins based on configuration sections
-        for section in self.config.sections():
-          if section != 'general':
-            m = self.__get_class("plugins.%s.%s" % (section, section))
-            p = m(backup_id=backup_id)
-            Thread(target=p.run, kwargs=dict(self.config.items(section)), name=section).start()
+          self.log.debug('Changing directory to %s.' % project_dir)
+          os.chdir(project_dir)
+          # Compress
+          self.log.debug('Compressing backup directory %s.' % now_tag)
+          backup_file = self.compress(now_tag)
+          # Gather few statistics
+          stats = 'Backup size is: %s' % self.human_size(os.path.getsize(backup_file))
+          self.log.info('Backup complete!')
+          self.log.info(stats)
+          status = 'Successful: %s' % now_tag
+        else:
+          self.log.info('Backups for %s are suspended by configuration file. Exiting!' % project_name)
+          status = 'Suspended'
+        # Send notifications
+        if self.config.getboolean('BAST', 'notifications', False):
+          self.notify(project_name, status, stats)
 
     def __init_path(self):
-        log.info('Initializing path settings...')
+        self.log.debug('Initializing path settings.')
         # Find out the location of bast's working directory, and insert it to sys.path
         basedir = os.path.dirname(os.path.realpath(__file__))
         if not os.path.exists(os.path.join(basedir, "bast.py")):
@@ -62,7 +81,6 @@ class bast(object):
         sys.path.insert(0, self.basedir)
 
     def __init_options(self):
-        log.info('Initializing option parser...')
         from optparse import OptionParser
         parser = OptionParser(version="%prog 0.1b",
                                    description="BAST (Backup And Synchronization Tools) - Egypt Development Center",
@@ -72,51 +90,111 @@ class bast(object):
 
         (self.options, self.args) = parser.parse_args()
         if not len(self.args):
-            log.error('Expecting a configuration file to be given (try "--help" for help).')
             parser.error('Expecting a configuration file to be given (try "--help" for help).')
         else:
             self.conf = self.args[0]
         
-    def __init_logging(self):
-        console_format = "%(levelname)-8s: %(message)s"
-        log_level = logging.WARNING
-        if self.options.verbose:
-            log_level = logging.INFO
-        if self.options.debug:
-            log_level = logging.DEBUG
-            console_format += " (%(name)s)"
-            
-        # Console logging
-        logging.basicConfig(level=log_level, format=console_format)
+    def __init_logging(self, project_name):
+      import logging
+      logging.basicConfig(level=logging.DEBUG,
+        format="[%(asctime)s] [%(levelname)-8s] %(message)s",
+        datefmt='%a %b %d %Y %H:%M:%S',
+        filename='log/%s.log' % project_name
+      )
+      console = logging.StreamHandler()
+      # formatter = logging.Formatter('%(message)s')
+      console.setFormatter(logging.Formatter('%(message)s'))
+      # Default console logging level
+      console.setLevel(logging.WARNING)
+      if self.options.debug:
+        console.setLevel(logging.DEBUG)
+        console.setFormatter(logging.Formatter('[%(levelname)-8s] %(message)s'))
+        logging.getLogger(project_name).addHandler(console)
+      elif self.options.verbose:
+        console.setLevel(logging.INFO)
+        logging.getLogger(project_name).addHandler(console)
+      self.log = logging.getLogger(project_name)
+      self.log.debug("Initializing BAST %s" % __version__)
+
+    def __init_config(self):
+      from bt import common
+      self.log.debug("Loading configuration file %s." % self.conf)
+      # Read configuration file
+      self.config = common.MyConfigParser()
+      self.config.read(self.conf)
 
     def __init_proc_name(self):
-        if sys.platform == 'linux2':
-            # Set process name.  Only works on Linux >= 2.1.57.
-            try:
-                import ctypes
-                libc = ctypes.CDLL('libc.so.6')
-                libc.prctl(15, 'bast', 0, 0, 0) # 15 = PR_SET_NAME
-            except:
-                pass
+      if sys.platform == 'linux2':
+        # Set process name.  Only works on Linux >= 2.1.57.
+        try:
+          import ctypes
+          libc = ctypes.CDLL('libc.so.6')
+          libc.prctl(15, 'bast', 0, 0, 0) # 15 = PR_SET_NAME
+        except:
+          pass
 
     def __get_class(self, class_name):
-        parts = class_name.split('.')
-        module = ".".join(parts[:-1])
-        m = __import__( module )
-        for comp in parts[1:]:
-            m = getattr(m, comp)
-        return m
-
-    def get_config(self):
-        log.info("Loading configuration file %s..." % self.conf)
-        from ConfigParser import ConfigParser
-        # Read configuration file
-        self.config = ConfigParser()
-        self.config.read(self.conf)
-
+      parts = class_name.split('.')
+      module = ".".join(parts[:-1])
+      m = __import__( module )
+      for comp in parts[1:]:
+        m = getattr(m, comp)
+      return m
+    
+    def get_conf(self, section, option, default):
+      try:
+        if self.config.has_section(section):
+          if self.config.has_option(section, option):
+            return self.config.get(section, option)
+      except:
+        return default
+      else:
+        return default
+    
     def set_timer(self):
-        #from time import time
-        pass
+      #from time import time
+      pass
 
     def get_version(self):
-        return __version__
+      return __version__
+    
+    def human_size(self, num):
+      for x in ['bytes','KB','MB','GB','TB']:
+        if num < 1024.0:
+          return "%3.1f%s" % (num, x)
+        num /= 1024.0
+
+    def compress(self, directory):
+      self.log.debug('Compressing %s.' % directory)
+      import tarfile
+      name = directory + '.tar.gz'
+      f = tarfile.open(name, 'w:gz')
+      f.add(directory)
+      f.close()
+      shutil.rmtree(directory)
+      # Remove latest symlink
+      if os.path.islink('latest'):
+        os.remove('latest')
+      self.log.debug('Creating symbolic link latest -> %s.' % directory)
+      os.symlink(name, 'latest')
+      return name    
+
+    def notify(self, project_name, status, stats = ''):
+      self.log.debug('Sending notifications for %s.' % project_name)
+      import smtplib
+      from email.mime.text import MIMEText
+      body = '''Hello,
+      Your backup status is: %s.
+      %s''' % (status, stats)
+      msg = MIMEText(body)
+      msg['Subject'] = '[%s - Backup] %s' % (project_name, status)
+      msg['From'] = self.config.get('BAST', 'mail.username')
+      msg['To'] = self.config.get('BAST', 'mail.notify')
+      s = smtplib.SMTP(self.config.get('BAST', 'mail.server'), self.config.get('BAST', 'mail.port'))
+      s.ehlo()
+      if self.config.getboolean('BAST', 'mail.tls', True):
+        s.starttls()
+      s.ehlo()
+      s.login(self.config.get('BAST', 'mail.username'), self.config.get('BAST', 'mail.password'))
+      s.sendmail(self.config.get('BAST', 'mail.username'), self.config.get('BAST', 'mail.notify'), msg.as_string())
+      s.quit()

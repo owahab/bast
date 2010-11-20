@@ -1,5 +1,6 @@
 import os
 import sys
+from ConfigParser import RawConfigParser
 
 class output:
     """
@@ -29,20 +30,38 @@ class output:
             text += "%(normal)s" % colors
             sys.stderr.writelines(text)
         return 0
-    
-    def to_email(self):
-        """
-        Handle output to e-mails
-        """
-        import smtplib
-        from email.mime.text import MIMEText
+        
 
-        msg = MIMEText(self.message)
-       
-        msg['Subject'] = 'The contents of %s' % textfile
-        msg['From'] = me
-        msg['To'] = you
+class MyConfigParser(RawConfigParser):
+  def __init__(self):
+  		RawConfigParser.__init__(self)
+  
+  def get(self, section, option, default = None):
+    value = default
+    try:
+      if RawConfigParser.has_section(self, section):
+        if RawConfigParser.has_option(self, section, option):
+          value = RawConfigParser.get(self, section, option)
+    except:
+      value = default
+    return value
 
-        s = smtplib.SMTP()
-        s.sendmail(me, [you], msg.as_string())
-        s.quit()
+  def getboolean(self, section, option, default):
+    value = default
+    try:
+      if RawConfigParser.has_section(self, section):
+        if RawConfigParser.has_option(self, section, option):
+          value = RawConfigParser.getboolean(self, section, option)
+    except:
+      value = default
+    return value
+
+  def getint(self, section, option, default):
+    value = default
+    try:
+      if RawConfigParser.has_section(self, section):
+        if RawConfigParser.has_option(self, section, option):
+          value = RawConfigParser.getint(self, section, option)
+    except:
+      value = default
+    return value
