@@ -14,6 +14,10 @@ Windows: bast.bat doc/examples/project1.conf
 
 Hint: You may also try --help for more help.
 
+LICENSE:
+--------
+LGPL v 3.0
+
 CONFIGURING BAST:
 -----------------
 A typical config file looks like:
