@@ -31,7 +31,7 @@ class bast(object):
           # characters, maybe we should validate that here.
           now_tag = '%04d.%02d.%02d-%02d.%02d.%02d' % (now.year, now.month, now.day, now.hour, now.minute, now.second)
           backup_id = '%s--%s' % (project_name, now_tag)
-          destination = '/tmp'
+          destination = self.config.get('BAST', 'root', '/var/backup')
           project_dir = '%s/%s' %(destination, project_name)
           target = '%s/%s' % (project_dir, now_tag)
           if not os.path.exists(project_dir):
