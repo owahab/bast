@@ -82,6 +82,7 @@ class bast(object):
           self.log.info(s)
           self.log.info('Backup complete!')
           backup_status = 'Successful: %s' % now_tag
+          self.sync(backup_file)
         else:
           self.log.info('Backups for %s are suspended by configuration file. Exiting!' % self.project_name)
           backup_status = 'Suspended'
@@ -245,3 +246,17 @@ class bast(object):
       s.login(self.config.get('BAST', 'mail.username'), self.config.get('BAST', 'mail.password'))
       s.sendmail(self.config.get('BAST', 'mail.username'), self.config.get('BAST', 'mail.notify'), msg.as_string())
       s.quit()
+    
+    def sync(self, backup_file):
+      if self.config.get('BAST', 'sync.protocol', 'ftp') == 'ftp':
+        self.log.debug('Synchronizing backups for %s over FTP.' % self.project_name)
+        from ftplib import FTP
+        ftp = FTP(self.config.get('BAST', 'sync.server'))
+        if self.config.get('BAST', 'sync.username', None) == None:
+          ftp.login()
+        else:
+          ftp.login(user=self.config.get('BAST', 'sync.username'), passwd=self.config.get('BAST', 'sync.password'))
+        f = file(backup_file, 'rb')
+        ftp.storbinary('STOR backups/%s--%s' % (self.project_name, backup_file), f)
+        ftp.quit()
+        
