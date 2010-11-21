@@ -48,7 +48,7 @@ class files(BastPlugin):
             elif symlinks == 2:
               shutil.copy2(srcname, dstname)
           elif os.path.isdir(srcname):
-              shutil.copytree(srcname, dstname, symlinks, ignore)
+              shutil.copytree(srcname, dstname, symlinks)
           else:
               shutil.copy2(srcname, dstname)
       except (IOError, os.error), why:
