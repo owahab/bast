@@ -5,7 +5,7 @@ from bt.plugin import BastPlugin
 class mysql(BastPlugin):
   mysqldump = 'mysqldump'
 
-  def run(self, host, username, dbname, password = ''):
+  def run(self, status, host, username, dbname, password = ''):
     p = ''
     if password:
       p = '-p' + password
@@ -23,7 +23,8 @@ class mysql(BastPlugin):
       ], stderr=subprocess.PIPE, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
     except:
       self.log.error('MySQL backup cancelled! (Error executing mysqldump)')
+      status['mysql'] = False
     else:
       self.compress(filename)
       self.log.debug('MySQL backup complete.')
-      self.status = True
+      status['mysql'] = True

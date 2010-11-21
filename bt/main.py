@@ -50,15 +50,23 @@ class bast(object):
           os.chdir(target)
           
           plugins_status = {}
+          threads = []
           # Dynamically load plugins based on configuration sections
           for section in self.config.sections():
             if section != 'BAST':
-              m = self.__get_class("plugins.%s.%s" % (section, section))
-              p = m(log=self.log, backup_id=backup_id)
-              thread = threading.Thread(target=p.run, kwargs=dict(self.config.items(section)), name=section)
-              thread.start()
-              thread.join()
-              plugins_status[section] = p.status
+              try:
+                m = self.__get_class("plugins.%s.%s" % (section, section))
+                p = m(log=self.log, backup_id=backup_id)
+                params = dict(self.config.items(section))
+                params['status'] = plugins_status
+                thread = threading.Thread(target=p.run, kwargs=params, name=section)
+                thread.start()
+                threads.append(thread)
+              except KeyboardInterrupt:
+                sys.exit()
+    
+          for t in threads:
+            t.join()
           for k, v in plugins_status.items():
             s = 'Executed plugin %s: %s' % (k, ('OK' if v == True else 'Failed'))
             report.append(s)

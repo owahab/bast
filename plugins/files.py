@@ -5,7 +5,7 @@ from bt.plugin import BastPlugin
 
 class files(BastPlugin):
   
-  def run(self, directory, symlinks='copy'):
+  def run(self, status, directory, symlinks='copy'):
     dir_name = self.backup_id + '--files'
     self.log.debug("Backing up directory %s." % directory)
     if symlinks == 'follow':
@@ -18,10 +18,11 @@ class files(BastPlugin):
       self.copytree(directory, dir_name, symlinks=symlinks_mode)
     except:
       self.log.error('File backup cancelled! (%s)' % sys.exc_info()[1])
+      status['files'] = False
     else:
       self.compress(dir_name)
       self.log.debug('Files backup complete.')
-      self.status = True
+      status['files'] = True
     
   def copytree(self, src, dst, symlinks=0, ignore=None):
     '''
