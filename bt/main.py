@@ -23,7 +23,7 @@ class bast(object):
           return
         
         # Define project root directory
-        self.project_dir = '%s/%s' %(self.config.get('BAST', 'root', '/var/backup'), self.project_name)
+        self.project_dir = '%s/%s' %(self.config.get('BAST', 'root', '/var/backups'), self.project_name)
         # Now create it
         if not os.path.exists(self.project_dir):
           os.mkdir(self.project_dir)
